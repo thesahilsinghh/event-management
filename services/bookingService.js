@@ -4,29 +4,52 @@ import Event from "../models/Event.js";
 /**
  * Book seats for an event
  */
-export const createBookingService = async (userId, eventId, seats) => {
-    // Check event exists
+export const createBookingService = async (userId, eventId, selectedSeats) => {
     const event = await Event.findById(eventId);
     if (!event) throw new Error("Event not found");
 
-    // Check seat availability
-    const availableSeats = event.totalSeats - event.bookedSeats;
-    if (seats > availableSeats) {
-        throw new Error("Not enough seats available");
+    // Check if any selected seat is already booked
+    const alreadyBooked = selectedSeats.filter((seat) =>
+        event.seats.some(
+            (s) => s.row === seat.row && s.number === seat.number && s.isBooked
+        )
+    );
+
+    if (alreadyBooked.length > 0) {
+        throw new Error(
+            `Seats already booked: ${alreadyBooked
+                .map((s) => `${s.row}${s.number}`)
+                .join(", ")}`
+        );
     }
 
-    // Calculate total price
-    const totalPrice = event.price * seats;
+    // Update isBooked field in seats
+    event.seats = event.seats.map((s) => {
+        const match = selectedSeats.some(
+            (seat) => seat.row === s.row && seat.number === s.number
+        );
+        return match ? { ...s.toObject(), isBooked: true } : s;
+    });
 
-    // Create booking
-    const booking = await Booking.create({ user: userId, event: eventId, seatsBooked: seats, totalPrice });
+    // Also keep track in bookedSeats array
+    event.bookedSeats.push(...selectedSeats);
 
-    // Update event's booked seats
-    event.bookedSeats += seats;
     await event.save();
+
+    // Calculate total price
+    const totalPrice = event.price * selectedSeats.length;
+
+    // Create booking record
+    const booking = await Booking.create({
+        user: userId,
+        event: eventId,
+        seatsBooked: selectedSeats,
+        totalPrice,
+    });
 
     return booking;
 };
+
 
 /**
  * Get all bookings for a user

@@ -1,9 +1,10 @@
 import {
-    createEventService,
+
     getEventsService,
     getEventByIdService,
     updateEventService,
-    deleteEventService
+    deleteEventService,
+    createEventService
 } from "../services/eventService.js";
 
 /**
@@ -12,6 +13,7 @@ import {
 export const createEvent = async (req, res) => {
     try {
         const event = await createEventService(req.body);
+
         res.status(201).json(event);
     } catch (error) {
         res.status(400).json({ message: error.message });
