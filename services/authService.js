@@ -1,18 +1,14 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
-/**
- * Generate JWT Token
- */
+//Generate JWT Token
 const generateToken = (userId) => {
     return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
         expiresIn: "30d",
     });
 };
 
-/**
- * Register a new user
- */
+//Register a new user
 export const registerUserService = async (userData) => {
     const { email } = userData;
 
@@ -35,9 +31,7 @@ export const registerUserService = async (userData) => {
     };
 };
 
-/**
- * Login user
- */
+// Login user
 export const loginUserService = async (email, password) => {
     const user = await User.findOne({ email }).select("+password");
 
@@ -55,9 +49,7 @@ export const loginUserService = async (email, password) => {
     };
 };
 
-/**
- * Get user profile
- */
+// Get user profile/
 export const getProfileService = async (userId) => {
     const user = await User.findById(userId);
 
@@ -73,3 +65,9 @@ export const getProfileService = async (userId) => {
         role: user.role,
     };
 };
+
+export const getAllUsersService = async () => {
+    const users = await User.find().select("-password");
+    return users;
+};
+
